@@ -4,12 +4,14 @@ import streamlit as st
 from gemini_chain import get_chat_chain
 from rag.rag_chain import get_rag_context
 from utils import get_sos_message, get_reflection_prompt
+from video_links import video_map  # 🔗 New import for video embedding
+import random
 
 # 📄 Page Setup
 st.set_page_config(page_title="DSCPL - Your Spiritual Companion", layout="wide")
 st.markdown("""
     <h1 style='text-align: center; font-size: 3rem; color: #FACC15;'>DSCPL</h1>
-    <h4 style='text-align: center; color: #f5f5f5;'>Rooted in scripture. Empowered by AI. Guided by grace.</h4>
+    
 """, unsafe_allow_html=True)
 
 # 🔁 Memory Initialization
@@ -19,6 +21,16 @@ if "messages" not in st.session_state:
 # 🧠 Load Memory-backed Chat Chain
 chat_chain = get_chat_chain()
 
+# 🎥 Embed Video by Category
+def embed_category_video(category):
+    videos = video_map.get(category, [])
+    if videos:
+        video = random.choice(videos)  # Randomize or just use videos[0] for static
+        st.markdown(f"##### 🎥 {video['title']}")
+        st.video(video["url"])
+    else:
+        st.info("No video content available for this topic yet.")
+
 # 📍 Sidebar Options
 with st.sidebar:
     st.header("💡 Spiritual Tools")
@@ -27,7 +39,7 @@ with st.sidebar:
     if st.button("🧘 Daily Reflection Prompt"):
         st.session_state.messages.append({"role": "assistant", "content": get_reflection_prompt()})
     st.markdown("---")
-    st.caption("🤖 Powered by Gemini 1.5 Flash + LangChain + RAG")
+    
 
 # 🔁 Prompt Map with Christian Spiritual Mentor Tone
 prompt_map = {
@@ -62,15 +74,31 @@ Use a gentle, understanding, and scripture-infused tone.""",
 st.subheader("📚 Choose Your Spiritual Focus")
 cols = st.columns(5)
 
+label_to_category = {
+    "✝️ Daily Devotion": "Devotion",
+    "🙏 Daily Prayer": "Prayer",
+    "🧘 Meditation": "Meditation",
+    "🛡️ Accountability": "Accountability",
+    "💬 Just Chat": None
+}
+
 for i, label in enumerate(prompt_map):
     with cols[i]:
         if st.button(label):
             st.session_state.messages.append({"role": "user", "content": label})
-
             prompt_text = prompt_map[label]
+
             if prompt_text:
-                response = chat_chain.invoke({"input": prompt_text}, config={"configurable": {"session_id": "default"}})
+                response = chat_chain.invoke(
+                    {"input": prompt_text},
+                    config={"configurable": {"session_id": "default"}}
+                )
                 st.session_state.messages.append({"role": "assistant", "content": response.content})
+
+                # ✅ Clean category match
+                category_key = label_to_category.get(label)
+                if category_key:
+                    embed_category_video(category_key)
             else:
                 st.session_state.messages.append({"role": "assistant", "content": "I'm here for you. What's on your heart today, my child?"})
 
