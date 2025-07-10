@@ -17,7 +17,7 @@ Use gentle emojis where helpful. Be real, kind, and encouraging.
 
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",  
+    model="gemini-2.0-flash",  
     temperature=0.7,
     google_api_key=os.environ["GOOGLE_API_KEY"]
 )
