@@ -1,4 +1,7 @@
-# utils.py
+from datetime import datetime, timedelta
+from icalendar import Calendar, Event
+import pytz
+from io import BytesIO
 
 def get_sos_message():
     return (
@@ -17,8 +20,28 @@ def get_reflection_prompt():
     )
 
 def format_response_with_emojis(text: str) -> str:
-    # Optional emoji booster — very basic for now
     text = text.replace("God", "🙏 God")
     text = text.replace("peace", "🕊️ peace")
     text = text.replace("strength", "💪 strength")
     return text
+
+def generate_ics(category, topic, total_days):
+    cal = Calendar()
+    cal.add("prodid", "-//DSCPL Spiritual Calendar//")
+    cal.add("version", "2.0")
+
+    start_date = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
+    tz = pytz.timezone("Asia/Kolkata")
+
+    for day in range(total_days):
+        event = Event()
+        event.add("summary", f"DSCPL Day {day+1} – {category}: {topic}")
+        start_dt = tz.localize(start_date + timedelta(days=day))
+        event.add("dtstart", start_dt)
+        event.add("dtend", start_dt + timedelta(minutes=30))
+        event.add("description", f"Spiritual {category.lower()} focus on '{topic}'")
+        cal.add_component(event)
+
+    buf = BytesIO()
+    buf.write(cal.to_ical())
+    return buf.getvalue()
